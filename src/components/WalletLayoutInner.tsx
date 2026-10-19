@@ -5,6 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { WalletButton } from "@/components/WalletButton";
 import { NetworkMismatchBanner } from "@/components/ui";
+import {
+  APP_VERSION,
+  COMMIT_HASH,
+  formatCommit,
+  formatVersion,
+  getCommitUrl,
+  getProtocolContractLinks,
+} from "@/lib/build-info";
 import { config } from "@/lib/config";
 import { useWallet } from "@/lib/wallet";
 
@@ -59,6 +67,11 @@ export function WalletLayoutInner({ children }: { children: React.ReactNode }) {
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open]);
+
+  const versionText = formatVersion(APP_VERSION);
+  const commitShort = formatCommit(COMMIT_HASH);
+  const commitUrl = getCommitUrl(commitShort);
+  const contractLinks = getProtocolContractLinks();
 
   return (
     <>
@@ -160,17 +173,82 @@ export function WalletLayoutInner({ children }: { children: React.ReactNode }) {
 
         <main className="flex-1 py-8">{children}</main>
 
+        {/*
+          Footer displays the build version and short commit hash (injected
+          via next.config.mjs at build time) alongside explorer links for
+          the three core protocol contracts. These remain visible in
+          contract-only mode and before any wallet connects, making it easy
+          to identify the running build when filing or reviewing bug reports.
+        */}
         <footer className="border-t border-edge py-6 text-xs text-muted">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span>Stellar testnet · unaudited · do not use with real funds</span>
-            <a
-              href="https://github.com/MMM-pay"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-slate-200"
+          <div className="flex flex-col gap-3">
+            <div
+              className="flex flex-wrap items-center gap-x-4 gap-y-1.5"
+              aria-label="Deployed protocol contracts"
             >
-              GitHub
-            </a>
+              <span className="font-medium text-slate-300">Contracts:</span>
+              {contractLinks.map((contract) => (
+                <span key={contract.name} className="inline-flex items-center gap-1">
+                  <span>{contract.name}:</span>
+                  {contract.url ? (
+                    <a
+                      href={contract.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mono text-muted underline-offset-2 hover:text-accent hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+                      title={contract.id}
+                      aria-label={`${contract.name} contract on Stellar Expert: ${contract.id}`}
+                    >
+                      {contract.shortId}
+                    </a>
+                  ) : (
+                    <span className="text-muted/60">not configured</span>
+                  )}
+                </span>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-slate-500">
+              <span>Stellar testnet · unaudited · do not use with real funds</span>
+              <div className="flex items-center gap-2">
+                {(versionText || commitShort) && (
+                  <>
+                    <span>
+                      {versionText}
+                      {commitShort && (
+                        <>
+                          {versionText ? " (" : ""}
+                          {commitUrl ? (
+                            <a
+                              href={commitUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mono underline-offset-2 hover:text-slate-300 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+                              title={`Git commit ${commitShort}`}
+                              aria-label={`Git commit ${commitShort}`}
+                            >
+                              {commitShort}
+                            </a>
+                          ) : (
+                            <span className="mono">{commitShort}</span>
+                          )}
+                          {versionText ? ")" : ""}
+                        </>
+                      )}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                  </>
+                )}
+                <a
+                  href="https://github.com/MMM-pay"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+                >
+                  GitHub
+                </a>
+              </div>
+            </div>
           </div>
         </footer>
       </div>
