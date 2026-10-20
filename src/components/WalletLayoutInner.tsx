@@ -209,7 +209,7 @@ export function WalletLayoutInner({ children }: { children: React.ReactNode }) {
           contract-only mode and before any wallet connects, making it easy
           to identify the running build when filing or reviewing bug reports.
         */}
-        <footer className="border-t border-edge py-6 text-xs text-muted">
+        <footer className="border-t border-edge py-6 text-xs text-muted print:hidden">
           <div className="flex flex-col gap-3">
             <div
               className="flex flex-wrap items-center gap-x-4 gap-y-1.5"
